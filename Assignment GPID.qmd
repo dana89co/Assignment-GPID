@@ -133,6 +133,46 @@ waldo::compare(table_agg_ord,aggre_given_ord)
 
 </details>
 
+## Find outliers
 
+The outliers by year are the following:
 
+```{r outliers}
+#| warning: false
+#| code-summary: "My code"
+
+table_out<- wdi |>
+  group_by(date)|>
+  mutate(across(c(lifeex, gdp, gini), list(mean=~weighted.mean(.,pop,na.rm=TRUE), sd=~sqrt(Hmisc::wtd.var(.,pop,na.rm=TRUE)))))|> 
+  ungroup()|>
+  mutate(hl_lifeex=(lifeex>(lifeex_mean+(2.5*lifeex_sd))), ll_lifeex=(lifeex<(lifeex_mean-(2.5*lifeex_sd))), hl_gdp=(gdp>(gdp_mean+(2.5*gdp_sd))), ll_gdp=(gdp<(gdp_mean-(2.5*gdp_sd))), hl_gini=(gini>(gini_mean+(2.5*gini_sd))), ll_gini=(gini<(gini_mean-(2.5*gini_sd))))
+
+table_out_pre<- rapply(table_out, f = round, classes = "numeric", how = "replace", digits = 3)
+datatable(table_out_pre,options = list(pageLength = 10))
+```
+<details>
+  <summary> Test to replicate </summary>
+
+Missing...
+
+```{r rep_out}
+
+out_given=readr::read_rds(paste0(data_url, "wdi_outliers_out.Rds"))
+
+```
+
+</details>
+
+The graph for extra points:
+
+```{r graph_1}
+#| warning: false
+library(ggplot2)
+
+ggplot(table_out, aes(x=date,y=lifeex))+
+  geom_point(aes(col = region))+
+  geom_line(aes(y=lifeex_mean))+
+  geom_ribbon(aes(ymin=(lifeex_mean-(2.5*lifeex_sd)),ymax=(lifeex_mean+(2.5*lifeex_sd))),alpha=0.3)+
+  theme(legend.position = "bottom")
+```
 
