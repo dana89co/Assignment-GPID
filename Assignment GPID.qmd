@@ -22,7 +22,7 @@ This document intends to replicate the assignment from the GPID team at the Worl
 
 ## Summary statistics of GDP per capita by region
 
-```{r}
+```{r data}
 #| code-summary: "Given code"
 
 tag      <- "202311081903"
@@ -66,8 +66,9 @@ datatable(stats_pre,options = list(pageLength = 10))
 <details>
     <summary> Test to replicate </summary>
 
-The method for mean and standard deviation might be different because they differ in 10 decimal points.
-```{r}
+There is a difference on the $10^{10}$ decimal point. I used dplyr but I see the final output is in data.table format. Probably mean and standard deviations are calculated differently. 
+
+```{r rep_stats}
 #| warning: false
 
 # Packages:
@@ -84,6 +85,54 @@ waldo::compare(stats,stats_given)
 
 ## Aggregate stats
 
-```{r}
+Now, I aggregated the life expectancy (lifeex),GDP (gdp), and poverty headcount at international poverty line (pov_intl): 
 
-}
+```{r aggr}
+#| warning: false
+#| code-summary: "My code"
+
+library(tidyr)
+library(reshape2)
+library(DescTools)
+
+table_agg <- wdi |>
+  select(region, date, lifeex, gdp, pov_intl, pop)|>
+  gather("variable", "value", -c(region,date,pop))|>
+  group_by(region,date,variable)|>
+  summarise(pop_tot= sum(pop),mean= sum(value*pop, na.rm = TRUE)/sum(pop),sd=sqrt(Hmisc::wtd.var(value,pop, na.rm = TRUE)), min = min(value, na.rm = TRUE), max = max(value, na.rm = TRUE), median= DescTools::Median(value, weights =pop, na.rm = TRUE))|>
+  rename(pop=pop_tot)|>
+  gather("estimate", "value", -c(region,date,pop,variable))|>
+  dcast(estimate+region+date+pop~variable)
+
+table_agg_pre<- rapply(table_agg, f = round, classes = "numeric", how = "replace", digits = 3)
+datatable(table_agg_pre,options = list(pageLength = 10))
+```
+
+<details>
+    <summary> Test to replicate </summary>
+
+Again, there is a difference on the $10^{10}$ decimal point. I used dplyr but I see the final output is in data.table format. Probably mean, standard deviations and medians are calculated differently. 
+
+```{r rep_aggr}
+#| warning: false
+
+# Data to replicate
+aggre_given= readr::read_rds(paste0(data_url, "wdi_agg_out.Rds"))
+
+# Order table as wdi_agg_out
+table_agg_ord = table_agg|>
+  relocate(lifeex, .before = gdp)|>
+  arrange(estimate,region, date)
+
+aggre_given_ord =aggre_given|>
+  arrange(estimate,region, date)
+
+# Comparison
+waldo::compare(table_agg_ord,aggre_given_ord)
+```
+
+</details>
+
+
+
+
