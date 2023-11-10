@@ -5,7 +5,9 @@ date: today
 format: 
   html: 
     theme: flatly
+    backgroundcolor: snow
     code-fold: true
+    footnotes-hover: true
     code-summary: "Examine the code"
     toc: true
     embed-resources: true
@@ -18,6 +20,70 @@ execute:
 
 This document intends to replicate the assignment from the GPID team at the World Bank for the STC described in <a href="https://randrescastaneda.github.io/Rtest1/Rtest1.html">R skills assessment</a>
 
+## Summary statistics of GDP per capita by region
+
 ```{r}
-1 + 1
+#| code-summary: "Given code"
+
+tag      <- "202311081903"
+base_url <- "https://github.com/randrescastaneda/pub_data/raw/"
+data_url <- paste0(base_url, tag, "/data/Rtest1/")
+
+
+wdi <-
+  readr::read_rds(paste0(data_url, "wdi_in1.Rds"))
 ```
+
+After downloading the data, I present the table with some statistics of GDP per capita by region and year:
+
+```{r stats}
+#| code-summary: "My code"
+#| warning: false
+# Packages
+library(DT)
+library(dplyr)
+library(Hmisc)
+
+# Check missing values
+# sapply(wdi, function(x) sum(is.na(x))) 
+
+# Table grouped by region and date
+table <- wdi |>
+  select(region,date,gdp, pop)|>
+  filter(is.na(gdp)!=TRUE)|>
+  rename(year=date)|>
+  mutate(gdp_wgt= gdp*pop)
+
+# Stats table with N, mean, sd, min and max
+stats <- table |>
+  group_by(region, year)|>
+  summarise(N=n(),Mean=weighted.mean(gdp,pop),SD=sqrt(Hmisc::wtd.var(gdp,pop)),Min=min(gdp),Max=max(gdp), .groups = "drop")
+
+# Present table                                                             
+stats_pre<- rapply(stats, f = round, classes = "numeric", how = "replace", digits = 0)
+datatable(stats_pre,options = list(pageLength = 10))
+```
+<details>
+    <summary> Test to replicate </summary>
+
+The method for mean and standard deviation might be different because they differ in 10 decimal points.
+```{r}
+#| warning: false
+
+# Packages:
+library(waldo)
+
+# Data to replicate
+stats_given= readr::read_rds(paste0(data_url, "wdi_summ_out.Rds"))
+
+# Comparison
+waldo::compare(stats,stats_given)
+```
+
+</details>
+
+## Aggregate stats
+
+```{r}
+
+}
