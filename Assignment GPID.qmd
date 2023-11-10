@@ -1,0 +1,23 @@
+---
+title: "Replication Assessment GPID"
+author: "Diana C. Garcia Rojas"
+date: today
+format: 
+  html: 
+    theme: flatly
+    code-fold: true
+    code-summary: "Examine the code"
+    toc: true
+    embed-resources: true
+    link-external-newwindow: true
+execute:
+  cache: true
+---
+
+## Introduction
+
+This document intends to replicate the assignment from the GPID team at the World Bank for the STC described in <a href="https://randrescastaneda.github.io/Rtest1/Rtest1.html">R skills assessment</a>
+
+```{r}
+1 + 1
+```
