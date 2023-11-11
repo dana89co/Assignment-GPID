@@ -1,5 +1,7 @@
 project:
   title: "Assignment GPID"
-
+  type: website
+  output-dir: docs
+  
 editor: visual
 
