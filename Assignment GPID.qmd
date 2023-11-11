@@ -273,7 +273,60 @@ datatable(all_measures,options = list(pageLength = 10))
 #| warning: false
 #| code-summary: "My code"
 
+# Make it data frame
+all_svy <- svy_sim |> 
+  bind_rows(.id = "Year") |>
+  mutate(Year=as.numeric(substr(Year, 2, 5)))
 
+# Create table
+bins= c(1:100)
+table_val <- 0
 
+for (i in bins){
+  decile <- all_svy |>
+  group_by(Year)|>
+  summarise(bin=i, 
+            welfare=quantile(income,i/100),
+            cum_welfare=sum(income[income<=welfare]*weight[income<=welfare])/sum(income*weight),
+            cum_population=sum(weight[income<=welfare])/sum(weight))
+  
+  table_val <- rbind(table_val,decile)
+}
+
+table_val= table_val[-1,]
+datatable(table_val,options = list(pageLength = 10))
+```
+
+The graph matches although the table does not.
+```{r graph2}
+#| warning: false
+
+#Graph 
+
+ggplot(table_val)+
+  geom_line(aes(x=cum_population,y=cum_welfare,color=as.factor(Year)))
+
+```
+
+### 6. Gini coefficient
+
+```{r gini}
+#| warning: false
+
+library(smplot2)
+gini_tab <- table_val |>
+  group_by(Year) |>
+  summarise(area=smplot2::sm_auc(cum_population, cum_welfare),gini= 1-2*area)
+
+datatable(gini_tab[,c("Year","gini")],options = list(pageLength = 10))
+```
+Gini graph:
+
+```{r graph3}
+#| warning: false
+
+ggplot(gini_tab)+
+  geom_point(aes(x=Year,y=gini))+
+  geom_line(aes(x=Year,y=gini))
 
 ```
